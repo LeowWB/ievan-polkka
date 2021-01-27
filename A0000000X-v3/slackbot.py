@@ -13,10 +13,8 @@ import json
 # classes defined for Objectives 1-3.
 
 class Echo:
-    def __init__(self, text):
-        self.text = text
 
-    def echo(text):
+    def echo(self,text: str):
         ''' Echoes the text sent in '''
         reply = "You said: {}".format(text)
         return reply
@@ -48,24 +46,61 @@ USER_EMOJI = ":dog:"
 # TODO Copy your Bot User OAuth-Access Token and paste it here
 SLACK_TOKEN = "xoxb-xxxxx-xxxxx-xxxxx"
 
-# This is the function where you can make replies as a function
-# of the message sent by the user
 # You'll need to modify the code to call the functions that
 # you've created in the rest of the exercises.
-def make_message(text):
+def make_message(user_input):
+    ''' Driver function - Parses the user_input, calls the appropriate classes and functions
+    and returns the output to the make_message() function
+
+    Example input: user_input = "OBJ0 echo_text=Hi there"
+    '''  
+
     # To stop the bot, simply enter the 'EXIT' command
-    if text == 'EXIT':
+    if user_input == 'EXIT':
         rtm_client.stop()
         with open('./conversation.json', 'w') as f:
             json.dump(conversation, f)
         return
+  
+    # Regex matching and calling appropriate classes and functions
+    pattern_dict = {
+        "OBJ0":r"OBJ0 echo_text=(?P<echo_text>.*)",
+        "OBJ1":r"OBJ1 path=(?P<path>.*) n_top_words=(?P<n_top_words>\d+) lowercase=(?P<lowercase>YES|NO) stopwords=(?P<stopwords>YES|NO)",
+        "OBJ2":r"OBJ2 (?P<input_text>.*)",
+        "OBJ3":r"OBJ3 path=(?P<path>.*) smooth=(?P<smooth>.*) n_gram=(?P<n_gram>\d) k=(?P<k>\d+(?:\.\d+)?) text=(?P<text>.*)",
+    }
 
-    # TODO Write your code to route the messages to the appropriate class
-    # depending on the first token.  You can start by trying to route a message
-    # of the form "OBJ0 Hi there", to the Echo class above, and then delete
-    # comment out the placeholder lines below.
-    reply = "You said: {}".format(text)
+    for key in pattern_dict.keys():
+        match = re.match(pattern_dict[key], user_input)
+        if match:
+            # Dictionary with key as argument name and value as argument value
+            commands_dict = match.groupdict()
+            if key == "OBJ0":
+                print("[SUCCESS] Matched objective 0")
+                echo = Echo()
+                reply = echo.echo(commands_dict['echo_text'])
+                break
+
+            elif key == "OBJ1":
+                print("[SUCCESS] Matched objective 1")
+                # TODO complete objective 1 
+                break
+
+            elif key == "OBJ2":
+                print("[SUCCESS] Matched objective 2")
+                # TODO complete objective 2
+                break
+            
+            elif key == "OBJ3":
+                print("[SUCCESS] Matched objective 3")
+                # TODO complete objective 3 
+                break
+        
+            else:
+                print("[ERROR] Did not match any commands!")
+
     return reply
+
 
 def do_respond(web_client, channel, text):
     # Post the message in Slack
