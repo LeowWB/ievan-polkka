@@ -44,7 +44,7 @@ USERNAME = "CS4248 Bot of Awesomeness"
 USER_EMOJI = ":dog:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "xoxb-xxxxx-xxxxx-xxxxx"
+SLACK_TOKEN = "xoxb-1675623418278-1667643412839-w8MbaEYgfWitufxxMSJNH4Xj"
 
 # You'll need to modify the code to call the functions that
 # you've created in the rest of the exercises.
