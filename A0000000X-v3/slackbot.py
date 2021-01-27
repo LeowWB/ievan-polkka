@@ -40,8 +40,8 @@ class Message:
 conversation = []
 
 # TODO Make these whatever you want.
-USERNAME = "CS4248 Bot of Awesomeness"
-USER_EMOJI = ":dog:"
+USERNAME = "Dude"
+USER_EMOJI = ":sunglasses:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
 SLACK_TOKEN = "xoxb-1675623418278-1667643412839-w8MbaEYgfWitufxxMSJNH4Xj"
