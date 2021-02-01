@@ -11,27 +11,36 @@ import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
 import re
 
 STOPWORDS = stopwords.words('english') # type: list(str)
+STOPWORDS = reversed(STOPWORDS.sort(key=len)) # sort by reversed length to remove longer stopwords first
 
 class Tokenizer:
 
-    # don't change function sigs, but can add optional param
+    # don't change function signatures, but can add optional param
     def __init__(self, path, lowercase=False):
         with open(path, encoding='utf-8', errors='ignore') as f:
             self.text = f.read()
+        if lowercase:
+            self.text = self.text.lower()
 
     def tokenize(self):
         ''' Returns a set of word tokens '''
         token_pattern = re.compile('\w+')
         tokens = list(filter(
             lambda token: token_pattern.match(token),
-            re.split(r'\W*\s+\W*', self.text)
+            re.split(r'(\W|_)*\s+(\W*|_)', self.text)
         ))
         return tokens
 
     def get_frequent_words(self, n):
         ''' Returns the most frequent unigrams from the text '''
-        # TODO Modify the code here
-        pass
+        word_freqs = {}
+        tokens = self.tokenize()
+        for token in tokens:
+            word_freqs[token] = word_freqs.get(token, 0) + 1
+        top_n = sorted(
+            word_freqs.items(), key=lambda item: -item[1]
+        )[:n]
+        return top_n
 
     def plot_word_frequency(self):
         '''
@@ -46,5 +55,9 @@ class Tokenizer:
 
     def remove_stopwords(self):
         ''' Removes stopwords from the text corpus '''
-        # TODO Modify the code here
-        pass
+        stopword_regex = ''
+        for stopword in STOPWORDS:
+            stopword_regex += f'({stopword})|'
+        stopword_regex = stopword_regex[:-1]
+        self.text = re.sub(stopword_regex, '', self.text)
+        return self.text
