@@ -3,24 +3,30 @@
 
     Class Tokenizer for handling Objective 1
 '''
-## Suggested libraries -- uncomment the below if you want to use these
-## recommended resources and libraries.
+import nltk
+nltk.download('stopwords')
 
-# from nltk.corpus import stopwords   # Requires NLTK in the include path.
-# import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
+from nltk.corpus import stopwords   # Requires NLTK in the include path.
+import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
+import re
 
-## List of stopwords
-# STOPWORDS = stopwords.words('english') # type: list(str)
+STOPWORDS = stopwords.words('english') # type: list(str)
+
 class Tokenizer:
 
-    def __init__(self, path):
+    # don't change function sigs, but can add optional param
+    def __init__(self, path, lowercase=False):
         with open(path, encoding='utf-8', errors='ignore') as f:
             self.text = f.read()
 
     def tokenize(self):
         ''' Returns a set of word tokens '''
-        # TODO Modify the code here
-        pass
+        token_pattern = re.compile('\w+')
+        tokens = list(filter(
+            lambda token: token_pattern.match(token),
+            re.split(r'\W*\s+\W*', self.text)
+        ))
+        return tokens
 
     def get_frequent_words(self, n):
         ''' Returns the most frequent unigrams from the text '''
