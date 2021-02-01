@@ -9,9 +9,10 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords   # Requires NLTK in the include path.
 import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
 import re
+import math
 
 STOPWORDS = stopwords.words('english') # type: list(str)
-STOPWORDS = reversed(STOPWORDS.sort(key=len)) # sort by reversed length to remove longer stopwords first
+STOPWORDS = reversed(sorted(STOPWORDS,key=len)) # sort by reversed length to remove longer stopwords first
 
 class Tokenizer:
 
@@ -24,22 +25,25 @@ class Tokenizer:
 
     def tokenize(self):
         ''' Returns a set of word tokens '''
-        token_pattern = re.compile('\w+')
+        token_pattern = re.compile("(\w|'|-)+")
         tokens = list(filter(
             lambda token: token_pattern.match(token),
-            re.split(r'(\W|_)*\s+(\W*|_)', self.text)
+            re.split(r'\W*\s+\W*', self.text)
         ))
         return tokens
 
+    # non-positive values of n will be treated as infinity (i.e. no limit)
     def get_frequent_words(self, n):
         ''' Returns the most frequent unigrams from the text '''
-        word_freqs = {}
         tokens = self.tokenize()
+        word_freqs = {}
         for token in tokens:
             word_freqs[token] = word_freqs.get(token, 0) + 1
         top_n = sorted(
             word_freqs.items(), key=lambda item: -item[1]
-        )[:n]
+        )
+        if n > 0:
+            return top_n[:n]
         return top_n
 
     def plot_word_frequency(self):
@@ -50,14 +54,19 @@ class Tokenizer:
                                 Total number of word tokens
         Rank r = Index of the word according to word occurence list
         '''
-        # TODO Modify the code here
-        pass
+        word_freqs = self.get_frequent_words(-1)
+        freqs = [math.log(word_freq[1]) for word_freq in word_freqs]
+        ranks = list(range(len(freqs)))
+        plt.scatter(ranks, freqs)
+        plt.show()
+
 
     def remove_stopwords(self):
         ''' Removes stopwords from the text corpus '''
         stopword_regex = ''
         for stopword in STOPWORDS:
-            stopword_regex += f'({stopword})|'
+            stopword_regex += f'((?<!\w){stopword}(?!\w))|'
+            stopword_regex += f'((?<!\w){stopword.capitalize()}(?!\w))|'
         stopword_regex = stopword_regex[:-1]
         self.text = re.sub(stopword_regex, '', self.text)
         return self.text
