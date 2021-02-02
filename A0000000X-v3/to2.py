@@ -14,7 +14,9 @@ EXPECTED_DEFAULT_QUERIES = [
     "singapore's weather",
     'singapore weather?',
     'weather in singapore?',
-    'what is the temperature like in singapore!'
+    'what is the temperature like in singapore!',
+    'i hear the weather in cairo is hot',
+    'i am studying at nus in singapore'
 ]
 
 EXPECTED_SINGAPORE_QUERIES = [
