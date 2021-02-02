@@ -38,8 +38,9 @@ class Weather:
 
     # prof said someth about substituting path with text, but unsure.
     def __init__(self, path):
-        with open(path, encoding='utf-8', errors='ignore') as f:
-            self.text = f.read()
+        #with open(path, encoding='utf-8', errors='ignore') as f:
+        #    self.text = f.read()
+        pass
 
 
     '''
@@ -52,12 +53,10 @@ class Weather:
             "(?P<city_name>\w+)('s)? {}"
         ]
         possible_requests = []
-        for weather_word in WEATHER_WORDS:
+        for weather_word in self.WEATHER_WORDS:
             for possible_request_format in possible_request_formats:
                 possible_requests.append(
-                    re.compile(
-                        possible_request_format.format(weather_word)
-                    )
+                    possible_request_format.format(weather_word)
                 )
         for possible_request in possible_requests:
             match = re.search(possible_request, text, flags=re.IGNORECASE)
@@ -69,7 +68,7 @@ class Weather:
         
     def has_weather_word(self, text):
         return bool(re.search(
-            '(' + '|'.join(WEATHER_WORDS) + ')',
+            '(' + '|'.join(self.WEATHER_WORDS) + ')',
             text,
             flags=re.IGNORECASE
         ))
@@ -83,7 +82,7 @@ class Weather:
 
 
     def starts_with_is(self, text):
-        return bool(re.search(r'^is', text, flags=re.IGNORECASE))
+        return bool(re.search('^is', text, flags=re.IGNORECASE))
 
     '''
     We identify questions by the lack of periods or exclamation points at the ending.
@@ -91,12 +90,12 @@ class Weather:
     question, even though there's no question mark.
     '''
     def is_question(self, text):
-        return bool(re.search(r'[^.!]\s*$'))
+        return bool(re.search(r'[^.!]\s*$', text))
 
 
     def cities_mentioned(self, text):
         mentioned = []
-        for city in CITIES:
+        for city in self.CITIES:
             if re.search(city, text, flags=re.IGNORECASE):
                 mentioned.append(city)
         return mentioned
@@ -123,23 +122,24 @@ class Weather:
         respond appropriately
         '''
         if not self.has_weather_word(text):
-            return DEFAULT
+            return self.DEFAULT
 
         mentioned = self.cities_mentioned(text)
         is_question = self.is_question(text)
-        how_or_what = self.starts_with_how_or_what(text)
+        starts_with_how_or_what = self.starts_with_how_or_what(text)
         is_request = self.is_request(text)
+        starts_with_is = self.starts_with_is(text)
         
         if len(mentioned) == 0:
-            return DEFAULT
+            return self.DEFAULT
         
-        if (is_question and how_or_what) or is_request:
+        if (is_question and (starts_with_how_or_what or starts_with_is)) or is_request:
             if len(mentioned) == 1:
-                return CITIES_WEATHER[mentioned[0]]
+                return self.CITIES_WEATHER[mentioned[0]]
             else:
                 requested_city = self.get_requested_city(text)
                 if requested_city:
-                    return CITIES_WEATHER[requested_city]
+                    return self.CITIES_WEATHER[requested_city]
         
-        return DEFAULT
+        return self.DEFAULT
         
