@@ -25,12 +25,18 @@ class Tokenizer:
 
     def tokenize(self):
         ''' Returns a set of word tokens '''
+        return tokenize_text(self.text)
+
+
+    @staticmethod
+    def tokenize_text(text):
         token_pattern = re.compile("(\w|'|-)+")
         tokens = list(filter(
             lambda token: token_pattern.match(token),
-            re.split(r'\W*\s+\W*', self.text)
+            re.split(r'\W*\s+\W*', text)
         ))
         return tokens
+
 
     # non-positive values of n will be treated as infinity (i.e. no limit)
     def get_frequent_words(self, n):
