@@ -27,7 +27,7 @@ from obj1_tokenizer import Tokenizer
 
 class NgramLM(object):
 
-    def __init__(self, n, k, backoff=False):
+    def __init__(self, n, k, interpolation=False):
         '''
             Initialize your n-gram LM class
 
@@ -44,14 +44,14 @@ class NgramLM(object):
         self.vocabulary = set()
         self.ngrams = []
         self.total_words = 0
-        self.backoff = backoff
+        self.interpolation = interpolation
 
-        if backoff:
-            self.get_next_word_probability = self.get_next_word_probability_backoff
-            self.generate_word = self.generate_word_backoff
+        if interpolation:
+            self.get_next_word_probability = self.get_next_word_probability_interpolation
+            self.generate_word = self.generate_word_interpolation
         else:
-            self.get_next_word_probability = self.get_next_word_probability_no_backoff
-            self.generate_word = self.generate_word_no_backoff
+            self.get_next_word_probability = self.get_next_word_probability_no_interpolation
+            self.generate_word = self.generate_word_no_interpolation
 
 
     def update_corpus(self, text):
@@ -90,7 +90,7 @@ class NgramLM(object):
     def update_ngram_counts(self, ngrams):
         '''
         Update the ngram counts; for each ngram, we also add versions of it with shorter context.
-        Rationale: can be used for backoff if original ngram is not found.
+        Rationale: can be used for interpolation if original ngram is not found.
         '''
         for text_ngram in ngrams:
             # suppose text_ngram = (("i", "am"), "a"). then the following will be incremented:
@@ -158,26 +158,25 @@ class NgramLM(object):
         '''
         return token.lower()
 
-# FUNCTIONS WHEN THERE IS NO BACKOFF ===========================================================
+    def get_context_tokens(self, text):
+        text_tokens = tuple(self.add_padding(Tokenizer.tokenize_text(text)))
+        num_elements_from_end = min(self.n - 1, len(text_tokens))
+        if num_elements_from_end == 0:
+            return ()
+        else:
+            return text_tokens[-num_elements_from_end:]
 
-    def get_next_word_probability_no_backoff(self, text, word):
+# FUNCTIONS WHEN THERE IS NO interpolation ===========================================================
+
+    def get_next_word_probability_no_interpolation(self, text, word):
         '''
         Returns the probability of word appearing after specified text.
-        NO BACKOFF
+        NO interpolation
         '''
         if word not in self.vocabulary:
             return 0
 
-        context = tuple(
-            self.add_padding(
-                Tokenizer.tokenize_text(text)
-            )
-        )
-        
-        # trim off the front of the context if it's too long.
-        if self.n - 1 < len(context):
-            context = context[1-self.n:]
-
+        context = self.get_context_tokens(text)
         ngram = (context, word)
         numerator = self.ngram_counts.get(ngram, 0)
         
@@ -196,43 +195,33 @@ class NgramLM(object):
             return numerator/denominator
 
 
-    def generate_word_no_backoff(self, text):
+    def generate_word_no_interpolation(self, text):
         pass
 
-# BACKOFF FUNCTIONS ============================================================================
-
-    def get_backoff_context(self, text, word):
-        '''
-        Backoff until a context is found where (context, word) has a non-smoothed count > 0.
-        '''
-        text_tokens = self.add_padding(Tokenizer.tokenize_text(text))
-        context_len = self.n - 1
-        while context_len > 0:
-            context = tuple(text_tokens[-context_len:])
-            ngram = (context, word)
-            if ngram in self.ngram_counts.keys():
-                return context
-            context_len -= 1
-        return tuple()
-  
+# interpolation FUNCTIONS ============================================================================
 
     def get_all_word_counts_given_context(self, text):
         '''
-        Given a specific context, return a dict whose keys are V, and whose values are the counts
-        of each word in the given context. BACKOFF IS APPLIED.
+        Given a specific context, return a dict whose keys are V, and whose values are the
+        (interpolated) "counts" of each word in the given context. 
         '''
+        context = self.get_context_tokens(text)
+        shortened_contexts = [context, context[:-1], context[:-2]]
+        
         counts = {}
         for word in self.vocabulary:
-            context = self.get_backoff_context(text, word)
-            ngram = (context, word)
-            counts[word] = self.ngram_counts[ngram]
+            counts[word] = (
+                self.ngram_counts.get((shortened_contexts[0], word), 0) * 0.7 +
+                self.ngram_counts.get((shortened_contexts[1], word), 0) * 0.2 +
+                self.ngram_counts.get((shortened_contexts[2], word), 0) * 0.1
+            )
         return counts
 
 
-    def get_next_word_probability_backoff(self, text, word):
+    def get_next_word_probability_interpolation(self, text, word):
         '''
         Returns the probability of word appearing after specified text.
-        USES BACKOFF.
+        USES interpolation.
         '''
         if word not in self.vocabulary:
             return 0
@@ -247,10 +236,10 @@ class NgramLM(object):
             return numerator/denominator
       
 
-    def generate_word_backoff(self, text):
+    def generate_word_interpolation(self, text):
         '''
         Returns a random word based on the specified text and n-grams learned
-        by the model. USES BACKOFF.
+        by the model. USES interpolation.
         '''
         counts = self.get_all_word_counts_given_context(text)
         total_counts = sum(counts.values())
@@ -267,3 +256,20 @@ class NgramLM(object):
                 return word
         
         assert False, "should not reach this point"
+
+# in case
+
+    # def get_interpolation_context(self, text, word):
+    #     '''
+    #     interpolation until a context is found where (context, word) has a non-smoothed count > 0.
+    #     '''
+    #     text_tokens = self.add_padding(Tokenizer.tokenize_text(text))
+    #     context_len = self.n - 1
+    #     while context_len > 0:
+    #         context = tuple(text_tokens[-context_len:])
+    #         ngram = (context, word)
+    #         if ngram in self.ngram_counts.keys():
+    #             return context
+    #         context_len -= 1
+    #     return tuple()
+  
