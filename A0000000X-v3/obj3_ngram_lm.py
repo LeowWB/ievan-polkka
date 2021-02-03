@@ -27,7 +27,7 @@ from obj1_tokenizer import Tokenizer
 
 class NgramLM(object):
 
-    def __init__(self, n, k):
+    def __init__(self, n, k, backoff=False):
         '''
             Initialize your n-gram LM class
 
@@ -44,6 +44,13 @@ class NgramLM(object):
         self.vocabulary = set()
         self.ngrams = []
         self.total_words = 0
+        self.backoff = backoff
+
+        if backoff:
+            self.get_next_word_probability = self.get_next_word_probability_backoff
+        else:
+            self.get_next_word_probability = self.get_next_word_probability_no_backoff
+
 
     def update_corpus(self, text):
         ''' Updates the n-grams corpus based on text. ADD to corpus'''
@@ -62,7 +69,11 @@ class NgramLM(object):
             self.add_to_ngrams(tokens)
         self.vocabulary.remove('~') # we don't need this in vocab.
 
+
     def add_to_ngrams(self, tokens):
+        '''
+        Generates the list of ngrams from the list of tokens
+        '''
         new_ngrams = []
         for i in range(1, len(tokens)):
             self.total_words += 1
@@ -73,20 +84,25 @@ class NgramLM(object):
         self.ngrams += new_ngrams
         self.update_ngram_counts(new_ngrams)
 
+
     def update_ngram_counts(self, ngrams):
         '''
         Update the ngram counts; for each ngram, we also add versions of it with shorter context.
         Rationale: can be used for backoff if original ngram is not found.
         '''
         for text_ngram in ngrams:
+            # suppose text_ngram = (("i", "am"), "a"). then the following will be incremented:
+            # (("i", "am"), "a"), (("am"), "a"), ((), "a")
             short_ngram = text_ngram
             while len(short_ngram[0]) > 0:
                 self.increment_ngram_count(short_ngram)
                 short_ngram = (short_ngram[0][1:], short_ngram[1])
             self.increment_ngram_count(short_ngram)
 
+
     def increment_ngram_count(self, ngram):
         self.ngram_counts[ngram] = self.ngram_counts.get(ngram, 0) + 1
+
 
     def read_file(self, path):
         ''' Read the file and update the corpus  '''
@@ -112,28 +128,72 @@ class NgramLM(object):
         return self.vocabulary
 
 
-    def get_next_word_probability(self, text, word):
+    def get_all_word_counts_given_context(self, text):
+        '''
+        Given a specific context, return a dict whose keys are V, and whose values are the counts
+        of each word in the given context. BACKOFF IS APPLIED.
+        '''
+        counts = {}
+        for word in self.vocabulary:
+            context = self.get_backoff_context(text, word)
+            ngram = (context, word)
+            counts[word] = self.ngram_counts[ngram]
+        return counts
+
+
+    def get_next_word_probability_backoff(self, text, word):
         '''
         Returns the probability of word appearing after specified text.
-        USE BACKOFF IF NEEDED.
+        USES BACKOFF.
         '''
         if word not in self.vocabulary:
             return 0
 
-        context = self.get_backoff_context(text, word)
-        ngram = (context, word)
-        numerator = self.ngram_counts[ngram]
+        counts = self.get_all_word_counts_given_context(text)
+        numerator = counts[word] + self.k
+        denominator = sum(counts.values()) + (self.k * len(self.vocabulary))
 
+        if denominator == 0:
+            raise "Division by 0 due to OOV"
+        else:
+            return numerator/denominator
+        
+    def get_next_word_probability_no_backoff(self, text, word):
+        '''
+        Returns the probability of word appearing after specified text.
+        NO BACKOFF
+        '''
+        if word not in self.vocabulary:
+            return 0
+
+        context = tuple(
+            self.add_padding(
+                Tokenizer.tokenize_text(text)
+            )
+        )
+        
+        # trim off the front of the context if it's too long.
+        if self.n - 1 < len(context):
+            context = context[1-self.n:]
+
+        ngram = (context, word)
+        numerator = self.ngram_counts.get(ngram, 0)
+        
         if len(context) == 0:
             denominator = self.total_words
         else:
             denom_ngram = (context[:-1], context[-1])
-            denominator = self.ngram_counts[denom_ngram]
-        
-        return (numerator + self.k) / (denominator + self.k * len(self.vocabulary))
+            denominator = self.ngram_counts.get(denom_ngram, 0)
+
+        numerator += self.k
+        denominator += self.k * len(self.vocabulary)
+
+        if denominator == 0:
+            raise "Division by 0 due to OOV"
+        else:
+            return numerator/denominator
 
 
-        
     def get_backoff_context(self, text, word):
         '''
         Backoff until a context is found where (context, word) has a non-smoothed count > 0.
