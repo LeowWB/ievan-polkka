@@ -130,15 +130,12 @@ class NgramLM(object):
         return self.vocabulary
 
 
-
-
-
-
     def generate_text(self, length):
         ''' Returns text of the specified number of words based on the learned model '''
-        # MUST BE RANDOM> NOT DETERMINISTIC.
-        # TODO Write your code here
-        pass
+        text = ""
+        for i in range(length):
+            text += self.generate_word(text) + " "
+        return text
 
 
     def perplexity(self, text):
