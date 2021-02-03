@@ -72,10 +72,10 @@ class NgramLM(object):
         self.update_ngram_counts(new_ngrams)
 
     def update_ngram_counts(self, ngrams):
-    '''
-    Update the ngram counts; for each ngram, we also add versions of it with shorter context.
-    Rationale: can be used for backoff if original ngram is not found.
-    '''
+        '''
+        Update the ngram counts; for each ngram, we also add versions of it with shorter context.
+        Rationale: can be used for backoff if original ngram is not found.
+        '''
         for text_ngram in ngrams:
             short_ngram = text_ngram
             while len(short_ngram[0]) > 0:
