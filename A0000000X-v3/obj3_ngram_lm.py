@@ -190,17 +190,48 @@ class NgramLM(object):
         denominator += self.k * len(self.vocabulary)
 
         if denominator == 0:
-            raise "Division by 0 due to OOV"
+            raise Exception("Division by 0 due to OOV")
         else:
             return numerator/denominator
 
 
+    def get_all_word_counts_given_context_no_interpolation(self, text):
+        '''
+        Given a specific context, return a dict whose keys are V, and whose values are the
+        counts of each word in the given context. 
+        '''
+        context = self.get_context_tokens(text)
+        counts = {}
+        for word in self.vocabulary:
+            ngram = (context, word)
+            counts[word] = self.ngram_counts.get(ngram, 0)
+        return counts
+
+
     def generate_word_no_interpolation(self, text):
-        pass
+        '''
+        Returns a random word based on the specified text and n-grams learned
+        by the model
+        '''
+        counts = self.get_all_word_counts_given_context_no_interpolation(text)
+        total_counts = sum(counts.values())
+        total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
+        random_value = random.random() * total_smoothed_counts
+
+        for word in self.vocabulary:
+            # although the order of words isn't guaranteed to be constant, we don't have to shuffle
+            # since we're making a random choice anyway (assume ordering of iteration over set is
+            # independent of random_value)
+            random_value -= counts[word]
+            random_value -= self.k
+            if random_value <= 0:
+                return word
+        
+        assert False, "should not reach this point"
 
 # interpolation FUNCTIONS ============================================================================
 
-    def get_all_word_counts_given_context(self, text):
+    def get_all_word_counts_given_context_interpolation(self, text):
         '''
         Given a specific context, return a dict whose keys are V, and whose values are the
         (interpolated) "counts" of each word in the given context. 
@@ -226,12 +257,12 @@ class NgramLM(object):
         if word not in self.vocabulary:
             return 0
 
-        counts = self.get_all_word_counts_given_context(text)
+        counts = self.get_all_word_counts_given_context_interpolation(text)
         numerator = counts[word] + self.k
         denominator = sum(counts.values()) + (self.k * len(self.vocabulary))
 
         if denominator == 0:
-            raise "Division by 0 due to OOV"
+            raise Exception("Division by 0 due to OOV")
         else:
             return numerator/denominator
       
@@ -241,7 +272,7 @@ class NgramLM(object):
         Returns a random word based on the specified text and n-grams learned
         by the model. USES interpolation.
         '''
-        counts = self.get_all_word_counts_given_context(text)
+        counts = self.get_all_word_counts_given_context_interpolation(text)
         total_counts = sum(counts.values())
         total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
         random_value = random.random() * total_smoothed_counts
@@ -252,7 +283,7 @@ class NgramLM(object):
             # independent of random_value)
             random_value -= counts[word]
             random_value -= self.k
-            if random_value < 0:
+            if random_value <= 0:
                 return word
         
         assert False, "should not reach this point"
