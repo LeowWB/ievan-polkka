@@ -22,7 +22,8 @@
 
 
 '''
-import random, math
+import random, math, re
+from obj1_tokenizer import Tokenizer
 
 class NgramLM(object):
 
@@ -44,36 +45,50 @@ class NgramLM(object):
 
     def update_corpus(self, text):
         ''' Updates the n-grams corpus based on text. ADD to corpus'''
-        
-        pass
+        sentence_split_pattern = re.compile(r'[?!.]\s+')
+        sentences = re.split(sentence_split_pattern, text)
+        for sentence in sentences:
+            tokens = self.add_padding(
+                list(
+                    map(
+                        self.normalize_token,
+                        Tokenizer.tokenize_text(sentence)
+                    )
+                )
+            )
+            self.vocabulary = self.vocabulary.union(set(tokens))
+            self.add_to_ngrams(tokens)
+        self.vocabulary.remove('~') # we don't need this in vocab.
 
+    def add_to_ngrams(self, tokens):
+        for i in range(1, len(tokens)):
+            lower_bound = max([0, i-self.n+1])
+            context = tokens[lower_bound:i]
+            next_word = tokens[i]
+            self.ngrams.append((context, next_word))
 
     def read_file(self, path):
         ''' Read the file and update the corpus  '''
         with open(path, encoding='utf-8', errors='ignore') as f:
             text = f.read()
-        text = text.lower()
         self.update_corpus(text)
 
 
     def ngrams(self):
         ''' Returns ngrams of the text as list of pairs - [(sequence context, word)] '''
-        # TODO Write your code here
-        pass
+        return self.ngrams
 
 
-    def add_padding(self):
+    def add_padding(self, sentence_tokens=[]):
         '''  Returns padded text '''
-        # TODO Write your code here
-        # Use '~' as your padding symbol just put it infront. don't pad end.
+        # Use '~' as your padding symbol just put it in front. don't pad end.
         # pad each sentence of the corpus.
-        pass
-
+        return ['~'] + sentence_tokens
+        
 
     def get_vocabulary(self):
         ''' Returns the vocabulary as set of words '''
-        # TODO Write your code here
-        pass
+        return self.vocabulary
 
 
     def get_next_word_probability(self, text, word):
@@ -107,3 +122,10 @@ class NgramLM(object):
         '''
         # TODO Write your code here
         pass
+
+    def normalize_token(self, token):
+        '''
+        Normalize by case folding. We don't do lemmatization and Penn Treebank, because that may
+        give rise to strange-looking sentences in generate_text.
+        '''
+        return token.lower()
