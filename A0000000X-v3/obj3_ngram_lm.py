@@ -48,10 +48,10 @@ class NgramLM(object):
 
         if interpolation:
             self.get_next_word_probability = self.get_next_word_probability_interpolation
-            self.generate_word = self.generate_word_interpolation
+            self.get_all_word_counts_given_context = self.get_all_word_counts_given_context_interpolation
         else:
             self.get_next_word_probability = self.get_next_word_probability_no_interpolation
-            self.generate_word = self.generate_word_no_interpolation
+            self.get_all_word_counts_given_context = self.get_all_word_counts_given_context_no_interpolation
 
 
     def update_corpus(self, text):
@@ -166,6 +166,27 @@ class NgramLM(object):
         else:
             return text_tokens[-num_elements_from_end:]
 
+    def generate_word(self, text):
+        '''
+        Returns a random word based on the specified text and n-grams learned
+        by the model. 
+        '''
+        counts = self.get_all_word_counts_given_context(text)
+        total_counts = sum(counts.values())
+        total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
+        random_value = random.random() * total_smoothed_counts
+
+        for word in self.vocabulary:
+            # although the order of words isn't guaranteed to be constant, we don't have to shuffle
+            # since we're making a random choice anyway (assume ordering of iteration over set is
+            # independent of random_value)
+            random_value -= counts[word]
+            random_value -= self.k
+            if random_value <= 0:
+                return word
+        
+        assert False, "should not reach this point"
+
 # FUNCTIONS WHEN THERE IS NO interpolation ===========================================================
 
     def get_next_word_probability_no_interpolation(self, text, word):
@@ -208,27 +229,6 @@ class NgramLM(object):
         return counts
 
 
-    def generate_word_no_interpolation(self, text):
-        '''
-        Returns a random word based on the specified text and n-grams learned
-        by the model
-        '''
-        counts = self.get_all_word_counts_given_context_no_interpolation(text)
-        total_counts = sum(counts.values())
-        total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
-        random_value = random.random() * total_smoothed_counts
-
-        for word in self.vocabulary:
-            # although the order of words isn't guaranteed to be constant, we don't have to shuffle
-            # since we're making a random choice anyway (assume ordering of iteration over set is
-            # independent of random_value)
-            random_value -= counts[word]
-            random_value -= self.k
-            if random_value <= 0:
-                return word
-        
-        assert False, "should not reach this point"
-
 # interpolation FUNCTIONS ============================================================================
 
     def get_all_word_counts_given_context_interpolation(self, text):
@@ -266,27 +266,6 @@ class NgramLM(object):
         else:
             return numerator/denominator
       
-
-    def generate_word_interpolation(self, text):
-        '''
-        Returns a random word based on the specified text and n-grams learned
-        by the model. USES interpolation.
-        '''
-        counts = self.get_all_word_counts_given_context_interpolation(text)
-        total_counts = sum(counts.values())
-        total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
-        random_value = random.random() * total_smoothed_counts
-
-        for word in self.vocabulary:
-            # although the order of words isn't guaranteed to be constant, we don't have to shuffle
-            # since we're making a random choice anyway (assume ordering of iteration over set is
-            # independent of random_value)
-            random_value -= counts[word]
-            random_value -= self.k
-            if random_value <= 0:
-                return word
-        
-        assert False, "should not reach this point"
 
 # in case
 
