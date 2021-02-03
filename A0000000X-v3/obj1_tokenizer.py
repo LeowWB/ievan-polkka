@@ -30,6 +30,7 @@ class Tokenizer:
 
     @staticmethod
     def tokenize_text(text):
+        text = ' ' + text + ' ' # to ensure punctuation at start/end of text is removed correctly
         token_pattern = re.compile("(\w|'|-)+")
         tokens = list(filter(
             lambda token: token_pattern.match(token),
