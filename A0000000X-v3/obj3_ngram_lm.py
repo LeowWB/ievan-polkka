@@ -72,8 +72,19 @@ class NgramLM(object):
         self.update_ngram_counts(new_ngrams)
 
     def update_ngram_counts(self, ngrams):
-        for ngram in ngrams:
-            self.ngram_counts[ngram] = self.ngram_counts.get(ngram, 0) + 1
+    '''
+    Update the ngram counts; for each ngram, we also add versions of it with shorter context.
+    Rationale: can be used for backoff if original ngram is not found.
+    '''
+        for text_ngram in ngrams:
+            short_ngram = text_ngram
+            while len(short_ngram[0]) > 0:
+                self.increment_ngram_count(short_ngram)
+                short_ngram = (short_ngram[0][1:], short_ngram[1])
+            self.increment_ngram_count(short_ngram)
+
+    def increment_ngram_count(self, ngram):
+        self.ngram_counts[ngram] = self.ngram_counts.get(ngram, 0) + 1
 
     def read_file(self, path):
         ''' Read the file and update the corpus  '''
