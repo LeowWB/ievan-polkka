@@ -118,6 +118,16 @@ class NgramLM(object):
         USE BACKOFF IF NEEDED.
         '''
         context = self.get_backoff_context(text, word)
+        ngram = (context, word)
+        numerator = self.ngram_counts[ngram]
+
+        if len(context) == 0:
+            denominator = self.total_words
+        else:
+            denom_ngram = (context[:-1], context[-1])
+            denominator = self.ngram_counts[denom_ngram]
+        
+        return (numerator + self.k) / (denominator + self.k * len(self.vocabulary))
 
 
         
