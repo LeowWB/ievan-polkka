@@ -40,6 +40,7 @@ class NgramLM(object):
         self.n = n
         self.k = k
         self.word_count_dict = {}
+        self.ngram_counts = {}
         self.vocabulary = set()
         self.ngrams = []
 
@@ -61,11 +62,18 @@ class NgramLM(object):
         self.vocabulary.remove('~') # we don't need this in vocab.
 
     def add_to_ngrams(self, tokens):
+        new_ngrams = []
         for i in range(1, len(tokens)):
             lower_bound = max([0, i-self.n+1])
             context = tokens[lower_bound:i]
             next_word = tokens[i]
-            self.ngrams.append((context, next_word))
+            new_ngrams.append((tuple(context), next_word))
+        self.ngrams += new_ngrams
+        self.update_ngram_counts(new_ngrams)
+
+    def update_ngram_counts(self, ngrams):
+        for ngram in ngrams:
+            self.ngram_counts[ngram] = self.ngram_counts.get(ngram, 0) + 1
 
     def read_file(self, path):
         ''' Read the file and update the corpus  '''
