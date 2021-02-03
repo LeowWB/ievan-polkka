@@ -65,7 +65,9 @@ class Weather:
         
         return None
         
-        
+    '''
+    Check if there is a weather-related word in the text.
+    '''
     def has_weather_word(self, text):
         return bool(re.search(
             '(' + '|'.join(self.WEATHER_WORDS) + ')',
@@ -73,14 +75,21 @@ class Weather:
             flags=re.IGNORECASE
         ))
     
-
+    '''
+    Check if text starts with one of the following: "how is", "how's", "what is", "what's".
+    Rationale: identify sentences like "how is the weather in Singapore?" or "what is the
+    weather like in Singapore?"
+    '''
     def starts_with_how_or_what(self, text):
         return (
             bool(re.search(r"^how( is|'s)", text, flags=re.IGNORECASE)) or
             bool(re.search(r"^what( is|'s)", text, flags=re.IGNORECASE))
         )
 
-
+    '''
+    Check if text starts with "is". 
+    Rationale: identify sentences like "is it rainy in Singapore?"
+    '''
     def starts_with_is(self, text):
         return bool(re.search('^is', text, flags=re.IGNORECASE))
 
@@ -92,7 +101,9 @@ class Weather:
     def is_question(self, text):
         return bool(re.search(r'[^.!]\s*$', text))
 
-
+    '''
+    Check which cities were mentioned in the text.
+    '''
     def cities_mentioned(self, text):
         mentioned = []
         for city in self.CITIES:
@@ -100,7 +111,11 @@ class Weather:
                 mentioned.append(city)
         return mentioned
     
-
+    '''
+    Check if the text is a request made by the user for information. Since the bot is supposed to
+    respond to requests in a conversational context, we assume that a request would include words
+    like "tell me" or "could you please inform me".
+    '''
     def is_request(self, text):
         request_words = ['tell', 'enlighten', 'inform', 'update', 'brief']
         before_request = [
