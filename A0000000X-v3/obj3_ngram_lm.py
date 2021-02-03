@@ -48,8 +48,10 @@ class NgramLM(object):
 
         if backoff:
             self.get_next_word_probability = self.get_next_word_probability_backoff
+            self.generate_word = self.generate_word_backoff
         else:
             self.get_next_word_probability = self.get_next_word_probability_no_backoff
+            self.generate_word = self.generate_word_no_backoff
 
 
     def update_corpus(self, text):
@@ -128,36 +130,36 @@ class NgramLM(object):
         return self.vocabulary
 
 
-    def get_all_word_counts_given_context(self, text):
-        '''
-        Given a specific context, return a dict whose keys are V, and whose values are the counts
-        of each word in the given context. BACKOFF IS APPLIED.
-        '''
-        counts = {}
-        for word in self.vocabulary:
-            context = self.get_backoff_context(text, word)
-            ngram = (context, word)
-            counts[word] = self.ngram_counts[ngram]
-        return counts
 
 
-    def get_next_word_probability_backoff(self, text, word):
-        '''
-        Returns the probability of word appearing after specified text.
-        USES BACKOFF.
-        '''
-        if word not in self.vocabulary:
-            return 0
 
-        counts = self.get_all_word_counts_given_context(text)
-        numerator = counts[word] + self.k
-        denominator = sum(counts.values()) + (self.k * len(self.vocabulary))
 
-        if denominator == 0:
-            raise "Division by 0 due to OOV"
-        else:
-            return numerator/denominator
-        
+    def generate_text(self, length):
+        ''' Returns text of the specified number of words based on the learned model '''
+        # MUST BE RANDOM> NOT DETERMINISTIC.
+        # TODO Write your code here
+        pass
+
+
+    def perplexity(self, text):
+        '''
+        Returns the perplexity of text based on learned model
+
+        Hint: To avoid numerical underflow, add logs instead of multiplying probabilities.
+        Also handle the case when the LM assigns zero probabilities.
+        '''
+        # TODO Write your code here
+        pass
+
+    def normalize_token(self, token):
+        '''
+        Normalize by case folding. We don't do lemmatization and Penn Treebank, because that may
+        give rise to strange-looking sentences in generate_text.
+        '''
+        return token.lower()
+
+# FUNCTIONS WHEN THERE IS NO BACKOFF ===========================================================
+
     def get_next_word_probability_no_backoff(self, text, word):
         '''
         Returns the probability of word appearing after specified text.
@@ -194,6 +196,11 @@ class NgramLM(object):
             return numerator/denominator
 
 
+    def generate_word_no_backoff(self, text):
+        pass
+
+# BACKOFF FUNCTIONS ============================================================================
+
     def get_backoff_context(self, text, word):
         '''
         Backoff until a context is found where (context, word) has a non-smoothed count > 0.
@@ -207,37 +214,56 @@ class NgramLM(object):
                 return context
             context_len -= 1
         return tuple()
+  
+
+    def get_all_word_counts_given_context(self, text):
+        '''
+        Given a specific context, return a dict whose keys are V, and whose values are the counts
+        of each word in the given context. BACKOFF IS APPLIED.
+        '''
+        counts = {}
+        for word in self.vocabulary:
+            context = self.get_backoff_context(text, word)
+            ngram = (context, word)
+            counts[word] = self.ngram_counts[ngram]
+        return counts
 
 
-    def generate_word(self, text):
+    def get_next_word_probability_backoff(self, text, word):
+        '''
+        Returns the probability of word appearing after specified text.
+        USES BACKOFF.
+        '''
+        if word not in self.vocabulary:
+            return 0
+
+        counts = self.get_all_word_counts_given_context(text)
+        numerator = counts[word] + self.k
+        denominator = sum(counts.values()) + (self.k * len(self.vocabulary))
+
+        if denominator == 0:
+            raise "Division by 0 due to OOV"
+        else:
+            return numerator/denominator
+      
+
+    def generate_word_backoff(self, text):
         '''
         Returns a random word based on the specified text and n-grams learned
-        by the model
+        by the model. USES BACKOFF.
         '''
-        # TODO Write your code here
-        pass
+        counts = self.get_all_word_counts_given_context(text)
+        total_counts = sum(counts.values())
+        total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
+        random_value = random.randint(0, total_smoothed_counts)
 
-
-    def generate_text(self, length):
-        ''' Returns text of the specified number of words based on the learned model '''
-        # MUST BE RANDOM> NOT DETERMINISTIC.
-        # TODO Write your code here
-        pass
-
-
-    def perplexity(self, text):
-        '''
-        Returns the perplexity of text based on learned model
-
-        Hint: To avoid numerical underflow, add logs instead of multiplying probabilities.
-        Also handle the case when the LM assigns zero probabilities.
-        '''
-        # TODO Write your code here
-        pass
-
-    def normalize_token(self, token):
-        '''
-        Normalize by case folding. We don't do lemmatization and Penn Treebank, because that may
-        give rise to strange-looking sentences in generate_text.
-        '''
-        return token.lower()
+        for word in self.vocabulary:
+            # although the order of words isn't guaranteed to be constant, we don't have to shuffle
+            # since we're making a random choice anyway (assume ordering of iteration over set is
+            # independent of random_value)
+            random_value -= counts[word]
+            random_value -= self.k
+            if random_value < 0:
+                return word
+        
+        assert False, "should not reach this point"
