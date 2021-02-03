@@ -43,6 +43,7 @@ class NgramLM(object):
         self.ngram_counts = {}
         self.vocabulary = set()
         self.ngrams = []
+        self.total_words = 0
 
     def update_corpus(self, text):
         ''' Updates the n-grams corpus based on text. ADD to corpus'''
@@ -64,6 +65,7 @@ class NgramLM(object):
     def add_to_ngrams(self, tokens):
         new_ngrams = []
         for i in range(1, len(tokens)):
+            self.total_words += 1
             lower_bound = max([0, i-self.n+1])
             context = tokens[lower_bound:i]
             next_word = tokens[i]
@@ -115,6 +117,8 @@ class NgramLM(object):
         Returns the probability of word appearing after specified text.
         USE BACKOFF IF NEEDED.
         '''
+        context = self.get_backoff_context(text, word)
+
 
         
     def get_backoff_context(self, text, word):
