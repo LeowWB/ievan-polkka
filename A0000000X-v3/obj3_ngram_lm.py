@@ -117,6 +117,9 @@ class NgramLM(object):
         Returns the probability of word appearing after specified text.
         USE BACKOFF IF NEEDED.
         '''
+        if word not in self.vocabulary:
+            return 0
+
         context = self.get_backoff_context(text, word)
         ngram = (context, word)
         numerator = self.ngram_counts[ngram]
