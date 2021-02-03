@@ -206,14 +206,14 @@ class NgramLM(object):
         (interpolated) "counts" of each word in the given context. 
         '''
         context = self.get_context_tokens(text)
-        shortened_contexts = [context, context[:-1], context[:-2]]
+        shortened_contexts = [context, context[1:], context[2:]]
         
         counts = {}
         for word in self.vocabulary:
             counts[word] = (
-                self.ngram_counts.get((shortened_contexts[0], word), 0) * 0.7 +
-                self.ngram_counts.get((shortened_contexts[1], word), 0) * 0.2 +
-                self.ngram_counts.get((shortened_contexts[2], word), 0) * 0.1
+                self.ngram_counts.get((shortened_contexts[0], word), 0) * 0.8 +
+                self.ngram_counts.get((shortened_contexts[1], word), 0) * 0.15 +
+                self.ngram_counts.get((shortened_contexts[2], word), 0) * 0.05
             )
         return counts
 
@@ -244,7 +244,7 @@ class NgramLM(object):
         counts = self.get_all_word_counts_given_context(text)
         total_counts = sum(counts.values())
         total_smoothed_counts = total_counts + (self.k * len(self.vocabulary))
-        random_value = random.randint(0, total_smoothed_counts)
+        random_value = random.random() * total_smoothed_counts
 
         for word in self.vocabulary:
             # although the order of words isn't guaranteed to be constant, we don't have to shuffle
