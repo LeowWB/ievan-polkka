@@ -111,9 +111,25 @@ class NgramLM(object):
 
 
     def get_next_word_probability(self, text, word):
-        ''' Returns the probability of word appearing after specified text '''
-        # TODO Write your code here
-        pass
+        '''
+        Returns the probability of word appearing after specified text.
+        USE BACKOFF IF NEEDED.
+        '''
+
+        
+    def get_backoff_context(self, text, word):
+        '''
+        Backoff until a context is found where (context, word) has a non-smoothed count > 0.
+        '''
+        text_tokens = self.add_padding(Tokenizer.tokenize_text(text))
+        context_len = self.n - 1
+        while context_len > 0:
+            context = tuple(text_tokens[-context_len:])
+            ngram = (context, word)
+            if ngram in self.ngram_counts.keys():
+                return context
+            context_len -= 1
+        return tuple()
 
 
     def generate_word(self, text):
