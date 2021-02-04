@@ -44,6 +44,7 @@ class NgramLM(object):
         self.vocabulary = set()
         self.ngrams = []
         self.total_words = 0
+        self.total_sentences = 0
         self.interpolation = interpolation
 
         if interpolation:
@@ -67,6 +68,7 @@ class NgramLM(object):
                     )
                 )
             )
+            self.total_sentences += 1
             self.vocabulary = self.vocabulary.union(set(tokens))
             self.add_to_ngrams(tokens)
         self.vocabulary.remove('~') # we don't need this in vocab.
@@ -200,6 +202,8 @@ class NgramLM(object):
         
         if len(context) == 0:
             denominator = self.total_words
+        elif context == ('~',):
+            denominator = self.total_sentences
         else:
             denom_ngram = (context[:-1], context[-1])
             denominator = self.ngram_counts.get(denom_ngram, 0)
