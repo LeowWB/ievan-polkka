@@ -146,7 +146,28 @@ class NgramLM(object):
 
         Hint: To avoid numerical underflow, add logs instead of multiplying probabilities.
         Also handle the case when the LM assigns zero probabilities.
+
+        ASSUMPTION:
+        We don't account for P(~|text), since we were explicitly told not to pad the text at the end.
         '''
+        words = tuple(
+            map(
+                self.normalize_token,
+                Tokenizer.tokenize_text(text)
+            )
+        )
+        context = ''
+        log_prob_sum = 0
+
+        for word in words:
+            prob = self.get_next_word_probability(context, word)
+            if prob == 0:
+                return float('nan')
+            log_prob_sum += math.log(prob, 10)
+            context += word + ' '
+        
+        total_prob = 10 ** log_prob_sum
+        return total_prob ** (-1 / len(words))
 
 
     def normalize_token(self, token):
