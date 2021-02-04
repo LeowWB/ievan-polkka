@@ -147,8 +147,7 @@ class NgramLM(object):
         Hint: To avoid numerical underflow, add logs instead of multiplying probabilities.
         Also handle the case when the LM assigns zero probabilities.
         '''
-        # TODO Write your code here
-        pass
+
 
     def normalize_token(self, token):
         '''
@@ -158,7 +157,12 @@ class NgramLM(object):
         return token.lower()
 
     def get_context_tokens(self, text):
-        text_tokens = tuple(self.add_padding(Tokenizer.tokenize_text(text)))
+        text_tokens = tuple(
+            map(
+                self.normalize_token,
+                self.add_padding(Tokenizer.tokenize_text(text))
+            )
+        )
         num_elements_from_end = min(self.n - 1, len(text_tokens))
         if num_elements_from_end == 0:
             return ()
@@ -193,6 +197,7 @@ class NgramLM(object):
         Returns the probability of word appearing after specified text.
         NO interpolation
         '''
+        word = self.normalize_token(word)
         if word not in self.vocabulary:
             return 0
 
@@ -255,6 +260,7 @@ class NgramLM(object):
         Returns the probability of word appearing after specified text.
         USES interpolation.
         '''
+        word = self.normalize_token(word)
         if word not in self.vocabulary:
             return 0
 
