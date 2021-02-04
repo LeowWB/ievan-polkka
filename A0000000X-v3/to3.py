@@ -4,7 +4,7 @@ from pdb import set_trace
 TEXT = ("I am a dwarf and I am digging a hole! Diggy diggy hole! Digging a hole!\n" +
         "DWARF! HOLE! DIGGY DIGGY HOLE! DIGGY DIGGY HOLE! DIGGY DIGGY HOLE!")
 
-mg = NgramLM(3, 1, interpolation=False)
+mg = NgramLM(3, 0, interpolation=False)
 mg.update_corpus(TEXT)
 
 # assert ng.get_next_word_probability("i am a ", "dwarf") == 1
