@@ -34,5 +34,9 @@ total_prob = 0
 for word in ng.vocabulary:
         total_prob += ng.get_next_word_probability("diggy", word)
 assert abs(total_prob-1) < 0.01
+total_prob = 0
+for word in ng.vocabulary:
+        total_prob += ng.get_next_word_probability("we am", word)
+assert abs(total_prob-1) < 0.01
 
 set_trace()
