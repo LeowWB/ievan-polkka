@@ -4,6 +4,21 @@
     Class NgramLM for handling Objective 3
 
 
+    Please use the following command for objective 3:
+    OBJ3 path=STRING smooth=TYPE n_gram=INT k=FLOAT text=STRING next_word=STRING length=INT
+    text: for generate_word(text), generate_next_word_probability(text, word), perplexity(text).
+    next_word: for generate_next_word_probability(text, word)
+    length: for generate_text(length)
+    Please update the pattern_dict  accordingly.
+    In the outputs, please mention which function gives what output. For instance,
+    """
+    Generated word: OUTPUT
+    Probability of next word: OUTPUT
+    Perplexity: OUTPUT
+    Generated text: OUTPUT
+    """ 
+    If you implement any other type of smoothing, please mention in the write-up as to how run it
+    as well - what is smooth=TYPE  value, does it require extra arguments like lambda, etc.?
 
 
 '''

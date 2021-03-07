@@ -2,10 +2,6 @@
     NUS CS4248 Assignment 1 - Objectives 1-3 Driver Code
 
     Classes Message, Echo, and helper functions for Slackbot
-
-
-    NOTE: when invoking OBJ3, please append a tilde (~) to the end of the "text" argument to
-    demarcate its ending.
 '''
 from slack_sdk.rtm import RTMClient
 import certifi
